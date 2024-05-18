@@ -8,7 +8,9 @@ const initialState = {
   isError: false,
   reloadList: false,
   isAddingProduct: false,
+  bulkInserted: false,
   current: {
+    event: "new",
     id_product: -1,
     handle: "",
     title: "",
@@ -55,7 +57,27 @@ export const createProduct = createAsyncThunk(
     });
 
     return res?.json();
-  },
+  }
+);
+
+export const bulkInsert = createAsyncThunk(
+  "bulkInsert",
+  async ({ products }) => {
+    const res = await fetch(
+      `${configurations.BACKEND_CATALOGO}/${endpoint}/bulk-insert`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          products,
+        }),
+      }
+    );
+
+    return res?.json();
+  }
 );
 
 export const getProducts = createAsyncThunk("getProducts", async () => {
@@ -67,10 +89,10 @@ export const getProductById = createAsyncThunk(
   "getProductById",
   async (id_product) => {
     const res = await fetch(
-      `${configurations.BACKEND_CATALOGO}/${endpoint}/${id_product}`,
+      `${configurations.BACKEND_CATALOGO}/${endpoint}/${id_product}`
     );
     return res?.json();
-  },
+  }
 );
 
 export const patchProductById = createAsyncThunk(
@@ -105,11 +127,11 @@ export const patchProductById = createAsyncThunk(
           compare_price,
           barcode,
         }),
-      },
+      }
     );
 
     return res?.json();
-  },
+  }
 );
 
 export const deleteProductById = createAsyncThunk(
@@ -119,11 +141,11 @@ export const deleteProductById = createAsyncThunk(
       `${configurations.BACKEND_CATALOGO}/${endpoint}/${id_product}`,
       {
         method: "DELETE",
-      },
+      }
     );
 
     return res?.json();
-  },
+  }
 );
 
 export const productSlice = createSlice({
@@ -133,8 +155,40 @@ export const productSlice = createSlice({
     addProduct: (state) => {
       state.isAddingProduct = true;
     },
+    editProduct: (state, action) => {
+      state.isAddingProduct = true;
+      state.current = {
+        event: "edit",
+        id_product: action.payload.id_product,
+        handle: action.payload.handle,
+        title: action.payload.title,
+        description: action.payload.description,
+        sku: action.payload.sku,
+        grams: action.payload.grams,
+        stock: action.payload.stock,
+        price: action.payload.price,
+        compare_price: action.payload.compare_price,
+        barcode: action.payload.barcode,
+      };
+    },
     cancelAddProduct: (state) => {
       state.isAddingProduct = false;
+      state.current = {
+        event: "new",
+        id_product: -1,
+        handle: "",
+        title: "",
+        description: "",
+        sku: -1,
+        grams: -1,
+        stock: -1,
+        price: -1,
+        compare_price: -1,
+        barcode: -1,
+      };
+    },
+    bulkInsertedOff: (state) => {
+      state.bulkInserted = false;
     },
   },
   extraReducers: (builder) => {
@@ -152,13 +206,30 @@ export const productSlice = createSlice({
       state.isError = true;
     });
 
+    //BULK INSERT PRODUCTS
+    builder.addCase(bulkInsert.pending, (state, action) => {
+      state.isLoading = true;
+      state.bulkInserted = false;
+    });
+    builder.addCase(bulkInsert.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.reloadList = true;
+      state.bulkInserted = true;
+    });
+    builder.addCase(bulkInsert.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+    });
+
     //ALL PRODUCTS
     builder.addCase(getProducts.pending, (state, action) => {
       state.isLoading = true;
     });
     builder.addCase(getProducts.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.list = action.payload;
+      if (action.payload.valid) {
+        state.list = action.payload.data;
+      }
       state.reloadList = false;
     });
     builder.addCase(getProducts.rejected, (state, action) => {
@@ -186,6 +257,20 @@ export const productSlice = createSlice({
     builder.addCase(patchProductById.fulfilled, (state, action) => {
       state.isLoading = false;
       state.reloadList = true;
+      state.isAddingProduct = false;
+      state.current = {
+        event: "new",
+        id_product: -1,
+        handle: "",
+        title: "",
+        description: "",
+        sku: -1,
+        grams: -1,
+        stock: -1,
+        price: -1,
+        compare_price: -1,
+        barcode: -1,
+      };
     });
     builder.addCase(patchProductById.rejected, (state, action) => {
       state.isLoading = false;
@@ -207,6 +292,7 @@ export const productSlice = createSlice({
   },
 });
 
-export const { addProduct, cancelAddProduct } = productSlice.actions;
+export const { addProduct, editProduct, cancelAddProduct, bulkInsertedOff } =
+  productSlice.actions;
 
 export default productSlice.reducer;

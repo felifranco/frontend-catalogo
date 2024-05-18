@@ -1,3 +1,38 @@
+# EJECUCIÓN
+
+## Archivo de variables
+
+Antes de ejecutar el proyecto es importante asegurarse de tener el archivo `.env` en la raíz con las variables de entorno. Ejemplo:
+
+```
+VITE_APP_PORT=5000
+VITE_BACKEND_CATALOGO=http://localhost:3000
+```
+
+Más información en la sección [Variables de entorno y modos](#variables-de-entorno-y-modos).
+
+## Instalar dependencias
+
+Instalar todas las dependencias agregadas en `package.json`
+
+```shell
+npm install
+```
+
+## Ejecución del proyecto
+
+```shell
+npm run dev
+```
+
+Luego de iniciado el proyecto se podrá visualizar el login de la aplicación en
+
+```
+http://localhost:5000/
+```
+
+Es importante registrarse primero para poder utilizar la aplicación.
+
 # Acerca del proyecto
 
 ## Tabla de contenido
@@ -9,6 +44,10 @@
   - [Prefijo predeterminado](#prefijo-predeterminado)
     - [Modificar prefijo predeterminado](#modificar-prefijo-predeterminado)
   - [Archivo `configurations.js`](#archivo-configurationsjs)
+- [Prettier](#prettier)
+- [ReduxJS y MaterialUI](#reduxjs-y-materialui)
+- [React Router Dom](#react-router-dom)
+- [Importación y carga de datos](#importación-y-carga-de-datos)
 
 ## Crear el proyecto
 
@@ -181,6 +220,22 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 
 Las llamadas hacia el API RESTful y el manejo de estados de _usuarios_ y _productos_ se hará en los archivos [src/store/Users/index.js](src/store/Users/index.js) y [src/store/Products/index.js](src/store/Products/index.js).
 
+Los estados de la aplicación tienen la siguiente estructura:
+
+```
+.
+├── store
+│   ├── Alert
+│   │   └── index.js
+│   ├── Auth
+│   │   └── index.js
+│   ├── index.js
+│   ├── Products
+│   │   └── index.js
+│   └── Users
+│       └── index.js
+```
+
 ### Componentes
 
 Crear la carpeta de componentes
@@ -190,7 +245,7 @@ cd src
 mkdir components
 ```
 
-Dentro de la carpeta `components` se encontrarán los componentes ordenados de acuerdo a los módulos que requiera la aplicación. Para este caso se tendrán la carpeta `Users` y `Products`.
+Dentro de la carpeta `components` se encontrarán los componentes ordenados de acuerdo a los módulos que requiera la aplicación. Para este caso se tendrán la carpeta `Users` y `Products` con los módulos del negocio, los otros son de uso común en una aplicación web.
 
 ```shell
 cd components
@@ -203,14 +258,60 @@ Los componentes que se utilizarán en este proyecto estarán distribuidos de la 
 ```
 .
 ├── components
+│   ├── Auth
+│   │   ├── Login.jsx
+│   │   └── Register.jsx
+│   ├── Common
+│   │   └── CustomModal.jsx
+│   ├── Import
+│   │   └── ImportExcel.jsx
+│   ├── Principal
+│   │   └── Principal.jsx
 │   ├── Products
+│   │   ├── ProductForm.jsx
+│   │   └── ProductList.jsx
 │   └── Users
+│       ├── UserForm.jsx
+│       └── UserList.jsx
 ```
 
-## Router
+## React Router Dom
 
 Instalación
 
 ```shell
-$ npm install react-router-dom
+npm install react-router-dom
 ```
+
+Se utilizará react-router-dom para el manejo de paths y navegación del proyecto
+
+```js
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Principal />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/register",
+    element: <Register />,
+  },
+]);
+```
+
+Más detalles en [src/App.jsx](src/App.jsx)
+
+## Importación y carga de datos
+
+Para la carga de datos se creó el módulo de importación, este se puede visualizar en el menú principal del Drawer.
+
+Instalación del paquete que se utilizará para la lectura del archivo de excel:
+
+```shell
+npm install xlsx
+```
+
+El componente encargada de esta función es [src/components/Import/ImportExcel.jsx](src/components/Import/ImportExcel.jsx)
